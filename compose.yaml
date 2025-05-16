@@ -1,0 +1,19 @@
+﻿services:
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
+
+  discordbot:
+    image: discordbot
+    build:
+      context: .
+      dockerfile: DiscordBot/Dockerfile
+
+  watcherservice:
+    image: watcherservice
+    build:
+      context: .
+      dockerfile: WatcherService/Dockerfile
+
