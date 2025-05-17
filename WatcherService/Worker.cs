@@ -11,14 +11,13 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
 
     public Worker(ILogger<Worker> logger, HttpClientFactoryWrapper httpClientFactoryWrapper)
     {
         _logger = logger;
         // Create a new HttpClient instance using our wrapper.
         _httpClient = httpClientFactoryWrapper.CreateClient("default");
-        _httpClient.BaseAddress = new Uri(_apiBaseUrl);
+        _httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("API_BASE_URL"));
         // Clear any existing Accept headers.
         _httpClient.DefaultRequestHeaders.Accept.Clear();
         // Add the Accept header for "application/json".

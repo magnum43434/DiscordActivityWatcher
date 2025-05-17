@@ -15,14 +15,12 @@ public class DiscordClient
 {
     private DiscordSocketClient?  _client;
     private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
-    private readonly ulong _guildId = Convert.ToUInt64(Environment.GetEnvironmentVariable("DISCORD_GUILD_ID"));
 
     public DiscordClient(HttpClientFactoryWrapper httpClientFactoryWrapper)
     {
         // Create a new HttpClient instance using our wrapper.
         _httpClient = httpClientFactoryWrapper.CreateClient("default");
-        _httpClient.BaseAddress = new Uri(_apiBaseUrl);
+        _httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("API_BASE_URL"));
         // Clear any existing Accept headers.
         _httpClient.DefaultRequestHeaders.Accept.Clear();
         // Add the Accept header for "application/json".
@@ -59,19 +57,23 @@ public class DiscordClient
 
     private async Task ClientReady()
     {
+        
         var timeSpentCommand = new Discord.SlashCommandBuilder()
             .WithName("time-spent")
             .WithDescription("Get time spent in voice channels for user.")
             .AddOption("user", ApplicationCommandOptionType.User, "The user you want to check their time spent.", isRequired: false);
-
+        
         var topTenCommand = new Discord.SlashCommandBuilder()
             .WithName("top-ten")
             .WithDescription("Get the top ten of users time spent in voice channels.");
-
+        
         try
         {
-            await _client.Rest.CreateGuildCommand(timeSpentCommand.Build(), _guildId);
-            await _client.Rest.CreateGuildCommand(topTenCommand.Build(), _guildId);
+            foreach (var guild in _client.Guilds)
+            {
+                await _client.Rest.CreateGuildCommand(timeSpentCommand.Build(), guild.Id);
+                await _client.Rest.CreateGuildCommand(topTenCommand.Build(), guild.Id);
+            }
         }
         catch (Exception e)
         {
@@ -102,7 +104,7 @@ public class DiscordClient
         var embedBuilder = new EmbedBuilder()
             .WithAuthor(guildUser.ToString(), guildUser.GetAvatarUrl() ?? guildUser.GetDefaultAvatarUrl())
             .WithTitle($"Time spent")
-            .WithDescription(user.ForDisplay())
+            .WithDescription(user.ForDisplay(guildUser.Nickname))
             .WithCurrentTimestamp();
         
         await command.RespondAsync(embed: embedBuilder.Build());
@@ -119,7 +121,9 @@ public class DiscordClient
             for (int i = 0; i < topTenUsers.Count(); i++)
             {
                 var user = topTenUsers.ElementAt(i);
-                stringBuilder.AppendLine($"{i + 1}. {user.Nickname} has spent {user.TimeActiv}.");
+                var guildId = command.GuildId ?? 0;
+                var guildUser = _client.GetGuild(guildId).GetUser(user.DiscordId);
+                stringBuilder.AppendLine($"{i + 1}. {guildUser.Nickname} has spent {user.TimeActiv}.");
             }
             
             var embedBuilder = new EmbedBuilder()
@@ -146,7 +150,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Left, 
                 oldState.VoiceChannel, 
-                $"{user.Nickname} ({socketUser.Username}) has left the voice channel ({oldState.VoiceChannel?.Name})", 
+                $"{(socketUser as SocketGuildUser).Nickname} ({socketUser.Username}) has left the voice channel ({oldState.VoiceChannel?.Name})", 
                 user);
             user.TransactionId = Guid.Empty;
         } 
@@ -156,7 +160,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Joined, 
                 newState.VoiceChannel, 
-                $"{user.Nickname} ({socketUser.Username}) has joined the voice channel ({newState.VoiceChannel?.Name})", 
+                $"{(socketUser as SocketGuildUser).Nickname} ({socketUser.Username}) has joined the voice channel ({newState.VoiceChannel?.Name})", 
                 user);
         }
         else
@@ -164,7 +168,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Switched, 
                 newState.VoiceChannel, 
-                $"{user.Nickname} ({socketUser.Username}) has switched the voice channel to {newState.VoiceChannel?.Name} from {oldState.VoiceChannel?.Name}", 
+                $"{(socketUser as SocketGuildUser).Nickname} ({socketUser.Username}) has switched the voice channel to {newState.VoiceChannel?.Name} from {oldState.VoiceChannel?.Name}", 
                 user);
         }
 
@@ -212,7 +216,6 @@ public class DiscordClient
         {
             DiscordId = socketUser.Id,
             Username = socketUser.Username,
-            Nickname = socketUser.Nickname,
             AvatarUrl = socketUser.GetAvatarUrl(),
             TimeActiv = "",
             TransactionId = Guid.Empty
