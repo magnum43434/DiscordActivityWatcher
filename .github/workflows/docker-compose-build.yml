@@ -15,14 +15,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # - name: Docker Login to Local Registry
-      #   run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login myregistry.server:5000 --username "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
-
-      - name: Check dir
-        run: ls
-
       - name: Build Docker Images
-        run: docker-compose -f compose.yml build
+        run: docker-compose -f compose.yaml build
 
       - name: Push Docker Images
-        run: docker-compose -f compose.yml push
+        run: docker-compose -f compose.yaml push
