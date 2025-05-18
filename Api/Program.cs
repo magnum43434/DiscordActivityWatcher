@@ -9,9 +9,18 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
+string dbPath = DatabasePathHelper.GetDatabasePath(Path.Combine("db", "SQLLiteDatabase.db"));
+string connectionString = $"Data Source={dbPath}";
+
+string dbFolder = Path.Combine(Directory.GetCurrentDirectory(), "db");
+if(!Directory.Exists(dbFolder))
+{
+    Directory.CreateDirectory(dbFolder);
+}
+
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(connectionString));
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
