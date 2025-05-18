@@ -1,6 +1,14 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
+
+# Create the db folder and set its permissions
+RUN mkdir -p /app/db && \
+    chown -R appuser:appuser /app/db
+
+# Switch to the non-root user
+USER appuser
+
 EXPOSE 8080
 EXPOSE 8081
 
