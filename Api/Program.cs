@@ -51,14 +51,19 @@ else
 {
     Console.WriteLine("Database does not exist");
 }
-// Option to automatically apply migrations on startup
-using (var scope = app.Services.CreateScope())
+
+try
 {
+    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    Console.WriteLine("Applying migrations...");
-    // This will automatically apply any pending migrations.
+    Console.WriteLine($"Applying migrations using database at: {dbContext.Database.GetDbConnection().ConnectionString}");
     dbContext.Database.Migrate();
     Console.WriteLine("Migrations applied successfully.");
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine($"An error occurred applying migrations: {ex.Message}");
+    throw;
 }
 
 // Configure the HTTP request pipeline.
