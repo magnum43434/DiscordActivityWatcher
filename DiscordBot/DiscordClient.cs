@@ -100,11 +100,13 @@ public class DiscordClient
         var commandOption = command.Data.Options.FirstOrDefault();
         var guildUser = commandOption != null ? commandOption.Value as SocketGuildUser : command.User as SocketGuildUser;
         var user = await GetUser(guildUser);
+        var result = await _httpClient.GetAsync($"api/TimeSpent/user/{user.Id}");
+        var timeSpent = await result.Content.ReadFromJsonAsync<TimeSpent>();
 
         var embedBuilder = new EmbedBuilder()
             .WithAuthor(guildUser.ToString(), guildUser.GetAvatarUrl() ?? guildUser.GetDefaultAvatarUrl())
             .WithTitle($"Time spent")
-            .WithDescription(user.ForDisplay(guildUser.Nickname))
+            .WithDescription(timeSpent.ForDisplay(guildUser.Nickname))
             .WithCurrentTimestamp();
         
         await command.RespondAsync(embed: embedBuilder.Build());
@@ -114,16 +116,18 @@ public class DiscordClient
     {
         try
         {
-            var result  = await _httpClient.GetAsync($"api/User/topten");
-            var topTenUsers = await result.Content.ReadFromJsonAsync<IEnumerable<User>>();
+            var guildId = command.GuildId ?? 0;
+            var result  = await _httpClient.GetAsync($"api/TimeSpent/topten/{guildId}");
+            var topTenTimeSpent = await result.Content.ReadFromJsonAsync<IEnumerable<TimeSpent>>();
             var stringBuilder = new StringBuilder();
 
-            for (int i = 0; i < topTenUsers.Count(); i++)
+            for (int i = 0; i < topTenTimeSpent.Count(); i++)
             {
-                var user = topTenUsers.ElementAt(i);
-                var guildId = command.GuildId ?? 0;
+                var timeSpent = topTenTimeSpent.ElementAt(i);
+                var userResult = await _httpClient.GetAsync($"api/User/{timeSpent.UserId}");
+                var user = await userResult.Content.ReadFromJsonAsync<User>();
                 var guildUser = _client.GetGuild(guildId).GetUser(user.DiscordId);
-                stringBuilder.AppendLine($"{i + 1}. {guildUser.Nickname} has spent {user.TimeActiv}.");
+                stringBuilder.AppendLine($"{i + 1}. {guildUser.Nickname} has spent {timeSpent.TimeActiv}.");
             }
             
             var embedBuilder = new EmbedBuilder()
@@ -142,7 +146,8 @@ public class DiscordClient
 
     private async Task UserVoiceStateUpdatedEvent(SocketUser socketUser, SocketVoiceState oldState, SocketVoiceState newState)
     {
-        User user = await GetUser(socketUser as SocketGuildUser);
+        var guildUser = socketUser as SocketGuildUser;
+        var user = await GetUser(guildUser);
         Activity activity;
         
         if (newState.VoiceChannel == null)
@@ -150,7 +155,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Left, 
                 oldState.VoiceChannel, 
-                $"{(socketUser as SocketGuildUser).Nickname} ({socketUser.Username}) has left the voice channel ({oldState.VoiceChannel?.Name})", 
+                $"{guildUser.Nickname} ({socketUser.Username}) has left the voice channel ({oldState.VoiceChannel?.Name})", 
                 user);
             user.TransactionId = Guid.Empty;
         } 
@@ -160,7 +165,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Joined, 
                 newState.VoiceChannel, 
-                $"{(socketUser as SocketGuildUser).Nickname} ({socketUser.Username}) has joined the voice channel ({newState.VoiceChannel?.Name})", 
+                $"{guildUser.Nickname} ({socketUser.Username}) has joined the voice channel ({newState.VoiceChannel?.Name})", 
                 user);
         }
         else
@@ -168,7 +173,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Switched, 
                 newState.VoiceChannel, 
-                $"{(socketUser as SocketGuildUser).Nickname} ({socketUser.Username}) has switched the voice channel to {newState.VoiceChannel?.Name} from {oldState.VoiceChannel?.Name}", 
+                $"{guildUser.Nickname} ({socketUser.Username}) has switched the voice channel to {newState.VoiceChannel?.Name} from {oldState.VoiceChannel?.Name}", 
                 user);
         }
 
@@ -180,9 +185,6 @@ public class DiscordClient
         var activity = new Activity()
         {
             Created = DateTime.UtcNow,
-            ChannelId = channel.Id,
-            ChannelName = channel.Name,
-            ChannelType = channel.ChannelType.ToString(),
             GuildId = channel.Guild.Id,
             GuildName = channel.Guild.Name,
             Message = message,
@@ -209,7 +211,7 @@ public class DiscordClient
     private async Task<User> GetUser(SocketGuildUser socketUser)
     {
         var result  = await _httpClient.GetAsync($"api/User/discord/{socketUser.Id}");
-        User user = await result.Content.ReadFromJsonAsync<User>();
+        var user = await result.Content.ReadFromJsonAsync<User>();
         
         if (user?.DiscordId != 0) return user;
         user = new User()
@@ -217,7 +219,6 @@ public class DiscordClient
             DiscordId = socketUser.Id,
             Username = socketUser.Username,
             AvatarUrl = socketUser.GetAvatarUrl(),
-            TimeActiv = "",
             TransactionId = Guid.Empty
         };
         

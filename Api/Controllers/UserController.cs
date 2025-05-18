@@ -28,12 +28,6 @@ namespace Api.Controllers
             return await _context.Users.ToListAsync();
         }
 
-        [HttpGet("topten")]
-        public async Task<ActionResult<IEnumerable<User>>> GetTopTenUsers()
-        {
-            return await _context.Users.OrderByDescending(u => u.MinutesActiv).Take(10).ToListAsync();
-        }
-
         // GET: api/User/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(Guid id)

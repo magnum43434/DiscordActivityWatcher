@@ -1,19 +1,20 @@
-﻿services:
+﻿version: '3.7'
+
+services:
   api:
-    image: api
+    image: 192.168.1.132:5000/discordactivitywatcher-api:1.0.0
     build:
       context: .
       dockerfile: Api/Dockerfile
 
   discordbot:
-    image: discordbot
+    image: 192.168.1.132:5000/discordactivitywatcher-discordbot:1.0.0
     build:
       context: .
       dockerfile: DiscordBot/Dockerfile
 
   watcherservice:
-    image: watcherservice
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.0
     build:
       context: .
       dockerfile: WatcherService/Dockerfile
-

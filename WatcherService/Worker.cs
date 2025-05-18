@@ -33,39 +33,83 @@ public class Worker : BackgroundService
 
             foreach (var user in await GetUsers())
             {
-                var timeCalculator = new TimeCalculator();
-                Dictionary<Guid, List<Activity>> transactions = new Dictionary<Guid, List<Activity>>();
                 var activities = await GetActivities(user.Id);
-                foreach (var activity in activities)
-                {
-                    if (!transactions.TryGetValue(activity.TransactionId, out List<Activity>? value))
-                    {
-                        value = new List<Activity>();
-                        transactions.Add(activity.TransactionId, value); 
-                    }
+                var guildIds = activities.Select(a => a.GuildId);
 
-                    value.Add(activity);
-                }
-                
-                foreach (var keyValuePair in transactions)
+                foreach (var guildId in guildIds)
                 {
-                    var joinActivity = keyValuePair.Value
-                        .FirstOrDefault(a => a.Action == ActivityAction.Joined);
-                    var leftActivity = keyValuePair.Value
-                        .FirstOrDefault(a => a.Action == ActivityAction.Left);
-                    if (joinActivity == null || leftActivity == null) continue;
-                    
-                    var timeSpent = leftActivity.Created - joinActivity.Created;
-                    timeCalculator.Add((int)timeSpent.TotalHours, timeSpent.Minutes);
+                    await CreateTimeSpent(user.Id, guildId);
                 }
-
-                user.TimeActiv = timeCalculator.ToString();
-                user.MinutesActiv = timeCalculator.TotalMinutes;
-                user.LastActiv = activities.LastOrDefault().Created;
-                await UpdateUser(user);
             }
 
             await Task.Delay(5000, stoppingToken);
+        }
+    }
+
+    private async Task CreateTimeSpent(Guid userId, ulong guildId)
+    {
+        var timeCalculator = new TimeCalculator();
+        var result = await _httpClient.GetAsync($"api/Activities/userId/{userId}/guildId/{guildId}");
+        var activities = await result.Content.ReadFromJsonAsync<IEnumerable<Activity>>();
+        var timeSpent = await GetTimeSpent(userId, guildId);
+        Dictionary<Guid, List<Activity>> transactions = new Dictionary<Guid, List<Activity>>();
+        foreach (var activity in activities)
+        {
+            if (!transactions.TryGetValue(activity.TransactionId, out List<Activity>? value))
+            {
+                value = new List<Activity>();
+                transactions.Add(activity.TransactionId, value); 
+            }
+            
+            value.Add(activity);
+        }
+                
+        foreach (var keyValuePair in transactions)
+        {
+            var joinActivity = keyValuePair.Value
+                .FirstOrDefault(a => a.Action == ActivityAction.Joined);
+            var leftActivity = keyValuePair.Value
+                .FirstOrDefault(a => a.Action == ActivityAction.Left);
+            if (joinActivity == null || leftActivity == null) continue;
+                    
+            var timeSpan = leftActivity.Created - joinActivity.Created;
+            timeCalculator.Add((int)timeSpan.TotalHours, timeSpan.Minutes);
+        }
+
+        timeSpent.TimeActiv = timeCalculator.ToString();
+        timeSpent.MinutesActiv = timeCalculator.TotalMinutes;
+        timeSpent.LastActiv = activities.LastOrDefault().Created;
+
+        await UpdateTimeSpent(timeSpent);
+    }
+
+    private async Task<TimeSpent> GetTimeSpent(Guid userId, ulong guildId)
+    {
+        var result = await _httpClient.GetAsync($"api/TimeSpent/userId/{userId}/guildId/{guildId}");
+        return await result.Content.ReadFromJsonAsync<TimeSpent>() ?? new TimeSpent() {UserId = userId, GuildId = guildId};
+    }
+
+    private async Task UpdateTimeSpent(TimeSpent timeSpent)
+    {
+        try
+        {
+            var jsonObject = System.Text.Json.JsonSerializer.Serialize(timeSpent);
+            var content = new StringContent(jsonObject.ToString(), Encoding.UTF8, "application/json");
+            if (timeSpent.Id != Guid.Empty)
+            {
+                var response = await _httpClient.PutAsync($"api/TimeSpent/{timeSpent.Id}", content);
+                response.EnsureSuccessStatusCode();
+            }
+            else
+            {
+                var response = await _httpClient.PostAsync($"api/TimeSpent", content);
+                response.EnsureSuccessStatusCode();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
     }
 

@@ -10,9 +10,6 @@ public class Activity
     [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
-    public ulong ChannelId { get; set; }
-    public string ChannelName { get; set; }
-    public string ChannelType { get; set; }
     public ulong GuildId { get; set; }
     public string GuildName { get; set; }
     public ActivityAction Action { get; set; }
@@ -27,6 +24,6 @@ public class Activity
 
     public override  string ToString()
     {
-        return $"Id: {Id}, UserId: {UserId}, ChannelId: {ChannelId}, ChannelName: {ChannelName}, ChannelType: {ChannelType}, Action: {Action}, Created: {Created}, Message: {Message}, TransactionId: {TransactionId}";
+        return $"Id: {Id}, UserId: {UserId}, Action: {Action}, Created: {Created}, Message: {Message}, TransactionId: {TransactionId}";
     }
 }

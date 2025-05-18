@@ -48,6 +48,12 @@ namespace Api.Controllers
             return await _context.Activities.Where(a => a.UserId == id).ToListAsync();
         }
         
+        [HttpGet("userId/{userId}/guildId/{guildId}")]
+        public async Task<ActionResult<IEnumerable<Activity>>> GetGuildActivities(Guid userId, ulong guildId)
+        {
+            return await _context.Activities.Where(a => a.UserId == userId && a.GuildId == guildId).ToListAsync();
+        }
+        
         // POST: api/Activity
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
