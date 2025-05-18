@@ -14,7 +14,7 @@ services:
       dockerfile: DiscordBot/Dockerfile
 
   watcherservice:
-    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.1
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.2
     build:
       context: .
       dockerfile: WatcherService/Dockerfile
