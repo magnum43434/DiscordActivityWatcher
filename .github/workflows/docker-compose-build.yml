@@ -19,7 +19,7 @@ jobs:
       #   run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login myregistry.server:5000 --username "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
       - name: Build Docker Images
-        run: docker-compose build
+        run: docker-compose -f compose.yml build
 
       - name: Push Docker Images
-        run: docker-compose push
+        run: docker-compose -f compose.yml push
