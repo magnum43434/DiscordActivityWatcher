@@ -1,6 +1,19 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
+
+# Switch to root so we have permission to create and change the directory
+USER root
+
+# Create a directory (for instance, for your SQLite DB) and set proper ownership and permissions.
+# Note: We use a permission like 755 here rather than 777 for security reasons.
+RUN mkdir -p /app/db && \
+    chown -R magnum:magnum /app/db && \
+    chmod 755 /app/db
+
+# Switch back to your non-root user
+USER magnum
+
 EXPOSE 8080
 EXPOSE 8081
 

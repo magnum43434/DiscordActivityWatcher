@@ -9,7 +9,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-string dbPath = DatabasePathHelper.GetDatabasePath();
+string dbPath = DatabasePathHelper.GetDatabasePath(Path.Combine("db", "SQLLiteDatabase.db"));
 string connectionString = $"Data Source={dbPath}";
 
 // Add services to the container.
