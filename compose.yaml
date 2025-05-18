@@ -2,7 +2,7 @@
 
 services:
   api:
-    image: 192.168.1.132:5000/discordactivitywatcher-api:1.0.3
+    image: 192.168.1.132:5000/discordactivitywatcher-api:1.0.4
     build:
       context: .
       dockerfile: Api/Dockerfile

@@ -46,8 +46,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // Automatically apply any pending migrations
+    Console.WriteLine("Applying migrations...");
+    // This will automatically apply any pending migrations.
     dbContext.Database.Migrate();
+    Console.WriteLine("Migrations applied successfully.");
 }
 
 // Configure the HTTP request pipeline.
