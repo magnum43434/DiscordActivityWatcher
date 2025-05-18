@@ -12,12 +12,6 @@ var configuration = builder.Configuration;
 string dbPath = DatabasePathHelper.GetDatabasePath();
 string connectionString = $"Data Source={dbPath}";
 
-string dbFolder = Path.Combine(Directory.GetCurrentDirectory(), "db");
-if(!Directory.Exists(dbFolder))
-{
-    Directory.CreateDirectory(dbFolder);
-}
-
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
