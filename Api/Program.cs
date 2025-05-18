@@ -42,6 +42,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+
+if (File.Exists(dbPath))
+{
+    Console.WriteLine("Database exists");
+}
+else
+{
+    Console.WriteLine("Database does not exist");
+}
 // Option to automatically apply migrations on startup
 using (var scope = app.Services.CreateScope())
 {
