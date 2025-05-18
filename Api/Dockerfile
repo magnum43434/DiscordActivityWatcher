@@ -5,14 +5,21 @@ WORKDIR /app
 # Switch to root so we have permission to create and change the directory
 USER root
 
-# Create a directory (for instance, for your SQLite DB) and set proper ownership and permissions.
-# Note: We use a permission like 755 here rather than 777 for security reasons.
+# Create a new non-root user named "appuser"
+# The command below uses "useradd". Depending on your base image,
+# you might need slightly different syntax.
+RUN useradd -ms /bin/bash appuser
+
+# Create a directory for your SQLite DB (or other persistent data)
 RUN mkdir -p /app/db && \
-    chown -R magnum:magnum /app/db && \
+    chown -R appuser:appuser /app/db && \
     chmod 755 /app/db
 
-# Switch back to your non-root user
-USER magnum
+# Optionally adjust ownership for your application files
+COPY --chown=appuser:appuser . /app
+
+# Switch to the non-root user for running your app
+USER appuser
 
 EXPOSE 8080
 EXPOSE 8081
