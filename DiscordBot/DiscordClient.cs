@@ -32,7 +32,10 @@ public class DiscordClient
     {
         var config = new DiscordSocketConfig()
         {
-            GatewayIntents = GatewayIntents.Guilds
+            GatewayIntents = GatewayIntents.AllUnprivileged 
+                             | GatewayIntents.GuildScheduledEvents 
+                             | GatewayIntents.GuildVoiceStates 
+                             | GatewayIntents.Guilds
         };
         _client = new DiscordSocketClient(config);
         
@@ -182,6 +185,8 @@ public class DiscordClient
 
     private async Task CreateActivity(ActivityAction action, SocketVoiceChannel channel, string message, User user)
     {
+        Console.WriteLine(message);
+        
         var activity = new Activity()
         {
             Created = DateTime.UtcNow,
