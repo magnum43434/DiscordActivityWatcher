@@ -86,7 +86,13 @@ public class Worker : BackgroundService
     private async Task<TimeSpent> GetTimeSpent(Guid userId, ulong guildId)
     {
         var result = await _httpClient.GetAsync($"api/TimeSpent/userId/{userId}/guildId/{guildId}");
-        return await result.Content.ReadFromJsonAsync<TimeSpent>() ?? new TimeSpent() {UserId = userId, GuildId = guildId};
+        var timeSpent = await result.Content.ReadFromJsonAsync<TimeSpent>();
+        if (!result.IsSuccessStatusCode || timeSpent == null)
+        {
+            timeSpent = new TimeSpent() {UserId = userId, GuildId = guildId};
+        }
+
+        return timeSpent;
     }
 
     private async Task UpdateTimeSpent(TimeSpent timeSpent)

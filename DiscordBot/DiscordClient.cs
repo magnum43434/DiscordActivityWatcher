@@ -103,14 +103,13 @@ public class DiscordClient
         var commandOption = command.Data.Options.FirstOrDefault();
         var guildUser = commandOption != null ? commandOption.Value as SocketGuildUser : command.User as SocketGuildUser;
         var user = await GetUser(guildUser);
-        var result = await _httpClient.GetAsync($"api/TimeSpent/user/{user.Id}");
+        var result = await _httpClient.GetAsync($"api/TimeSpent/userId/{user.Id}/guildId/{guildUser.Guild.Id}");
         var timeSpent = await result.Content.ReadFromJsonAsync<TimeSpent>();
 
         var embedBuilder = new EmbedBuilder()
             .WithAuthor(guildUser.ToString(), guildUser.GetAvatarUrl() ?? guildUser.GetDefaultAvatarUrl())
             .WithTitle($"Time spent")
-            .WithDescription(timeSpent.ForDisplay(guildUser.Nickname))
-            .WithCurrentTimestamp();
+            .WithDescription(timeSpent.ForDisplay(guildUser.Nickname));
         
         await command.RespondAsync(embed: embedBuilder.Build());
     }
@@ -132,11 +131,10 @@ public class DiscordClient
                 var guildUser = _client.GetGuild(guildId).GetUser(user.DiscordId);
                 stringBuilder.AppendLine($"{i + 1}. {guildUser.Nickname} has spent {timeSpent.TimeActiv}.");
             }
-            
+
             var embedBuilder = new EmbedBuilder()
                 .WithTitle($"Top 10 of users time spent")
-                .WithDescription(stringBuilder.ToString())
-                .WithCurrentTimestamp();
+                .WithDescription(stringBuilder.ToString());
         
             await command.RespondAsync(embed: embedBuilder.Build());
         }
@@ -217,7 +215,7 @@ public class DiscordClient
     {
         var result  = await _httpClient.GetAsync($"api/User/discord/{socketUser.Id}");
         var user = await result.Content.ReadFromJsonAsync<User>();
-        
+
         if (user?.DiscordId != 0) return user;
         user = new User()
         {
@@ -226,11 +224,13 @@ public class DiscordClient
             AvatarUrl = socketUser.GetAvatarUrl(),
             TransactionId = Guid.Empty
         };
-        
+
+        user = await UpdateUser(user);
+
         return user;
     }
 
-    private async Task UpdateUser(User user)
+    private async Task<User> UpdateUser(User user)
     {
         try
         {
@@ -240,11 +240,13 @@ public class DiscordClient
             {
                 var response = await _httpClient.PutAsync($"api/User/{user.Id}", content);
                 response.EnsureSuccessStatusCode();
+                return user;
             }
             else
             {
                 var response = await _httpClient.PostAsync($"api/User", content);
                 response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<User>();
             }
         }
         catch (Exception e)

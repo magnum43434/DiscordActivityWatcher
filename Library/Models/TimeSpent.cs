@@ -17,6 +17,6 @@ public class TimeSpent
     {
         var danishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
         var danishTime = TimeZoneInfo.ConvertTimeFromUtc(this.LastActiv, danishTimeZone);
-        return $"{nickName} has spent {this.TimeActiv} in voice channels.\nLast activ: {danishTime}";
+        return $"{nickName} has spent {this.TimeActiv} in voice channels.\n\nLast activ: {danishTime}";
     }
 }
