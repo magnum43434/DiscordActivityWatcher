@@ -158,7 +158,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Left, 
                 oldState.VoiceChannel, 
-                $"{DateTime.UtcNow}: {guildUser.Nickname} ({socketUser.Username}) has left the voice channel ({oldState.VoiceChannel?.Name})", 
+                $"{guildUser.Nickname} ({socketUser.Username}) has left the voice channel ({oldState.VoiceChannel?.Name})", 
                 user);
             user.TransactionId = Guid.Empty;
         } 
@@ -168,7 +168,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Joined, 
                 newState.VoiceChannel, 
-                $"{DateTime.UtcNow}: {guildUser.Nickname} ({socketUser.Username}) has joined the voice channel ({newState.VoiceChannel?.Name})", 
+                $"{guildUser.Nickname} ({socketUser.Username}) has joined the voice channel ({newState.VoiceChannel?.Name})", 
                 user);
         }
         else
@@ -176,7 +176,7 @@ public class DiscordClient
             await CreateActivity(
                 ActivityAction.Switched, 
                 newState.VoiceChannel, 
-                $"{DateTime.UtcNow}: {guildUser.Nickname} ({socketUser.Username}) has switched the voice channel to {newState.VoiceChannel?.Name} from {oldState.VoiceChannel?.Name}", 
+                $"{guildUser.Nickname} ({socketUser.Username}) has switched the voice channel to {newState.VoiceChannel?.Name} from {oldState.VoiceChannel?.Name}", 
                 user);
         }
 
@@ -185,7 +185,7 @@ public class DiscordClient
 
     private async Task CreateActivity(ActivityAction action, SocketVoiceChannel channel, string message, User user)
     {
-        Console.WriteLine(message);
+        await Log(new LogMessage(LogSeverity.Info, "UserVoiceStateUpdated", message));
         
         var activity = new Activity()
         {
