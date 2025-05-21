@@ -63,16 +63,21 @@ public class Worker : BackgroundService
             
             value.Add(activity);
         }
-                
+
         foreach (var keyValuePair in transactions)
         {
             var joinActivity = keyValuePair.Value
                 .FirstOrDefault(a => a.Action == ActivityAction.Joined);
+            var switchedActivity = keyValuePair.Value
+                .LastOrDefault(a => a.Action == ActivityAction.Switched);
             var leftActivity = keyValuePair.Value
                 .FirstOrDefault(a => a.Action == ActivityAction.Left);
-            if (joinActivity == null || leftActivity == null) continue;
-                    
-            var timeSpan = leftActivity.Created - joinActivity.Created;
+            
+            TimeSpan timeSpan;
+            if (joinActivity != null && leftActivity == null && switchedActivity != null) timeSpan = switchedActivity.Created - joinActivity.Created;
+            else if (joinActivity != null && leftActivity != null) timeSpan = leftActivity.Created - joinActivity.Created;
+            else continue;
+            
             timeCalculator.Add((int)timeSpan.TotalHours, timeSpan.Minutes);
         }
 
