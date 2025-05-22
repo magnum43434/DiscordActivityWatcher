@@ -11,7 +11,6 @@ public class Activity
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public ulong GuildId { get; set; }
-    public string GuildName { get; set; }
     public ActivityAction Action { get; set; }
     public DateTime Created { get; set; }
     public string Message { get; set; }

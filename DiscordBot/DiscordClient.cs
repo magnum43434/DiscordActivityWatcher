@@ -189,7 +189,6 @@ public class DiscordClient
         {
             Created = DateTime.UtcNow,
             GuildId = channel.Guild.Id,
-            GuildName = channel.Guild.Name,
             Message = message,
             TransactionId = user.TransactionId,
             Action = action,
