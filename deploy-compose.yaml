@@ -1,0 +1,54 @@
+version: '3.7'
+
+services:
+  discordactivitywatcher-api:
+    image: 192.168.1.132:5000/discordactivitywatcher-api:1.1.9
+    container_name: discordactivitywatcher-api
+    restart: unless-stopped
+    depends_on:
+      - sqlserver
+    ports:
+      - "8080:8080"
+    working_dir: /app
+
+
+  discordactivitywatcher-discordbot:
+    image: 192.168.1.132:5000/discordactivitywatcher-discordbot:1.0.6
+    restart: unless-stopped
+    depends_on:
+      - discordactivitywatcher-api
+    environment:
+      - API_BASE_URL
+      - DISCORD_TOKEN
+
+  discordactivitywatcher-watcherservice:
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.4
+    container_name: discordactivitywatcher-watcherservice
+    restart: unless-stopped
+    depends_on:
+      - discordactivitywatcher-api
+    environment:
+      - API_BASE_URL
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver_db
+    environment:
+      # Set the SA (system administrator) password.
+      # This value must conform to SQL Server’s password policy.
+      # Accept the End‑User License Agreement
+      - SA_PASSWORD
+      - ACCEPT_EULA=Y
+      # (Optional) Set your edition if needed, for example "Express"
+      - MSSQL_PID=Express
+    ports:
+      # Expose SQL Server on the default port 1433.
+      - "1433:1433"
+    volumes:
+      # Persist SQL Server data locally so that your database survives container restarts.
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+
+
+volumes:
+  sqlserver_data:

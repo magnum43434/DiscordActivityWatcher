@@ -6,7 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CCA890BA-8D16-4B8F-928E-9BC589730379}"
 	ProjectSection(SolutionItems) = preProject
-		compose.yaml = compose.yaml
+		build-and-publish-compose.yaml = build-and-publish-compose.yaml
+		deploy-compose.yaml = deploy-compose.yaml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordBot", "DiscordBot\DiscordBot.csproj", "{C089DBD2-A165-4859-AC90-03056F3D00E6}"
