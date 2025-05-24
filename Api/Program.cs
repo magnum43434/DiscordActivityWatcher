@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
 using Api;
 using Api.ApplicationDbContext;
+using HealthChecks.UI.Client;
 using Library.Utils;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
@@ -44,6 +46,13 @@ builder.Services.AddSwaggerGen(c =>
 
 });
 
+builder.Services.AddHealthChecks()
+    .AddSqlServer(
+        connectionString, 
+        name: "MSSQL", 
+        tags: ["ready"]
+    );
+
 var app = builder.Build();
 
 try
@@ -73,5 +82,18 @@ app.UseCors("AllowAll");
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+// Readiness endpoint: Checks external dependencies such as MSSQL.
+// Only checks tagged with "ready" are run.
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = (check) => check.Tags.Contains("ready"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();
