@@ -2,6 +2,8 @@
 USER $APP_UID
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y curl
+
 # Switch to root so we have permission to create and change the directory
 USER root
 
