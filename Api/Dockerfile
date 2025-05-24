@@ -2,8 +2,11 @@
 USER $APP_UID
 WORKDIR /app
 
+
 # Switch to root so we have permission to create and change the directory
 USER root
+
+RUN apt-get update && apt-get install -y curl
 
 # Create a new non-root user named "appuser"
 # The command below uses "useradd". Depending on your base image,
