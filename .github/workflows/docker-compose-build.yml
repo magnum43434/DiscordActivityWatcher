@@ -25,6 +25,7 @@ jobs:
   deploy:
     name: Deploy docker compose
     needs: publish
+    environment: "Hygge bot"
     runs-on: self-hosted
     
     steps:
@@ -35,7 +36,6 @@ jobs:
         run: |
           echo "API_BASE_URL=${{ vars.API_BASE_URL }}" > .env
           echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> .env
-          echo "SA_PASSWORD=${{ secrets.SA_PASSWORD }}" >> .env
   
       - name: Deploy with Docker Compose
         run: docker-compose -f deploy-compose.yaml up -d --force-recreate
