@@ -17,7 +17,7 @@ services:
       retries: 3
 
   discordactivitywatcher-discordbot:
-    image: 192.168.1.132:5000/discordactivitywatcher-discordbot:1.0.7
+    image: 192.168.1.132:5000/discordactivitywatcher-discordbot:1.0.8
     container_name: discordactivitywatcher-discordbot
     restart: unless-stopped
     depends_on:
@@ -27,7 +27,7 @@ services:
       - DISCORD_TOKEN
         
   discordactivitywatcher-discordbotcommand:
-    image: 192.168.1.132:5000/discordactivitywatcher-discordbotcommand:1.0.0
+    image: 192.168.1.132:5000/discordactivitywatcher-discordbotcommand:1.0.1
     container_name: discordactivitywatcher-discordbotcommand
     restart: unless-stopped
     depends_on:
@@ -37,7 +37,7 @@ services:
       - DISCORD_TOKEN_COMMAND
 
   discordactivitywatcher-watcherservice:
-    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.5
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.6
     container_name: discordactivitywatcher-watcherservice
     restart: unless-stopped
     depends_on:
@@ -46,7 +46,7 @@ services:
       - API_BASE_URL
         
   discordactivitywatcher-watcherservicemonth:
-    image: 192.168.1.132:5000/discordactivitywatcher-watcherservicemonth:1.0.0
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservicemonth:1.0.1
     container_name: discordactivitywatcher-watcherservicemonth
     restart: unless-stopped
     depends_on:
