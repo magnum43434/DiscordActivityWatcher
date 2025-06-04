@@ -135,7 +135,6 @@ public class DiscordClient
         {
             DiscordId = socketUser.Id,
             Username = socketUser.Username,
-            AvatarUrl = socketUser.GetAvatarUrl(),
             TransactionId = Guid.Empty
         };
 

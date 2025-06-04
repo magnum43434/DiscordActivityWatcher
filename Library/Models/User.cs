@@ -9,7 +9,6 @@ public class User
     public Guid Id { get; set; }
     public ulong DiscordId { get; set; }
     public string Username { get; set; }
-    public string AvatarUrl { get; set; }
     public Guid TransactionId { get; set; }
     
     public override string ToString()
