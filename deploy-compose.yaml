@@ -2,21 +2,22 @@ version: '3.7'
 
 services:
   discordactivitywatcher-api:
-    image: 192.168.1.132:5000/discordactivitywatcher-api:1.1.11
+    image: 192.168.1.132:5000/discordactivitywatcher-api:1.2.11
     container_name: discordactivitywatcher-api
     restart: unless-stopped
     ports:
       - "8080:8080"
     working_dir: /app
+    environment:
+      - CONNECTION_STRING_DEFAULT
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/live" ]
       interval: 30s
       timeout: 10s
       retries: 3
 
-
   discordactivitywatcher-discordbot:
-    image: 192.168.1.132:5000/discordactivitywatcher-discordbot:1.0.6
+    image: 192.168.1.132:5000/discordactivitywatcher-discordbot:1.0.7
     container_name: discordactivitywatcher-discordbot
     restart: unless-stopped
     depends_on:
@@ -24,10 +25,29 @@ services:
     environment:
       - API_BASE_URL
       - DISCORD_TOKEN
+        
+    discordactivitywatcher-discordbotcommand:
+    image: 192.168.1.132:5000/discordactivitywatcher-discordbotcommand:1.0.0
+    container_name: discordactivitywatcher-discordbotcommand
+    restart: unless-stopped
+    depends_on:
+      - discordactivitywatcher-api
+    environment:
+      - API_BASE_URL
+      - DISCORD_TOKEN_COMMAND
 
   discordactivitywatcher-watcherservice:
-    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.4
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservice:1.0.5
     container_name: discordactivitywatcher-watcherservice
+    restart: unless-stopped
+    depends_on:
+      - discordactivitywatcher-api
+    environment:
+      - API_BASE_URL
+        
+  discordactivitywatcher-watcherservicemonth:
+    image: 192.168.1.132:5000/discordactivitywatcher-watcherservicemonth:1.0.0
+    container_name: discordactivitywatcher-watcherservicemonth
     restart: unless-stopped
     depends_on:
       - discordactivitywatcher-api

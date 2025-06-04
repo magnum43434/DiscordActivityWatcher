@@ -42,16 +42,21 @@ namespace Api.Controllers
             return activity;
         }
 
-        [HttpGet("user/{id}")]
-        public async Task<ActionResult<IEnumerable<Activity>>> GetUserActivities(Guid id)
+        [HttpGet("user")]
+        public async Task<ActionResult<IEnumerable<Activity>>> GetUserActivities(Guid userId)
         {
-            return await _context.Activities.Where(a => a.UserId == id).ToListAsync();
+            return await _context.Activities.Where(a => a.UserId == userId).ToListAsync();
         }
         
-        [HttpGet("userId/{userId}/guildId/{guildId}")]
+        [HttpGet("guild")]
         public async Task<ActionResult<IEnumerable<Activity>>> GetGuildActivities(Guid userId, ulong guildId)
         {
             return await _context.Activities.Where(a => a.UserId == userId && a.GuildId == guildId).ToListAsync();
+        }
+        
+        [HttpGet("guildIds")]
+        public async Task<ActionResult<IEnumerable<ulong>>> GetGuildIds(Guid userId) {
+            return await _context.Activities.Where(a => a.UserId == userId).Select(a => a.GuildId).ToListAsync();
         }
         
         // POST: api/Activity

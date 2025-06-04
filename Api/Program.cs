@@ -12,10 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 // Verify the connection string is loaded:
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING_DEFAULT");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    throw new InvalidOperationException("The connection string 'DefaultConnection' was not found in appsettings.json.");
+    throw new InvalidOperationException("The environment variable 'CONNECTION_STRING_DEFAULT' was not found or empty.");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -55,19 +55,7 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-try
-{
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    Console.WriteLine($"Applying migrations using database at: {dbContext.Database.GetDbConnection().ConnectionString}");
-    dbContext.Database.Migrate();
-    Console.WriteLine("Migrations applied successfully.");
-}
-catch (Exception ex)
-{
-    Console.Error.WriteLine($"An error occurred applying migrations: {ex.Message}");
-    throw;
-}
+app.Services.EnsureDatabaseMigrated();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

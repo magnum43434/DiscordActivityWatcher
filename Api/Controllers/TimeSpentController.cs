@@ -35,13 +35,13 @@ namespace Api.Controllers
             return await _context.TimeSpent.Where(x => x.GuildId == guildId).ToListAsync();
         }
 
-        [HttpGet("userId/{userId}")]
+        [HttpGet("user")]
         public async Task<ActionResult<IEnumerable<TimeSpent>>> GetTimeSpentByUserId(Guid userId)
         {
            return await _context.TimeSpent.Where(x => x.UserId == userId).ToListAsync();
         }
 
-        [HttpGet("userId/{userId}/guildId/{guildId}")]
+        [HttpGet("guild")]
         public async Task<ActionResult<TimeSpent>> GetTimeSpentByUserIdAndGuildId(Guid userId, ulong guildId)
         {
             var timeSpent = await _context.TimeSpent.FirstOrDefaultAsync(x => x.UserId == userId && x.GuildId == guildId);
@@ -54,7 +54,7 @@ namespace Api.Controllers
             return timeSpent;
         }
         
-        [HttpGet("topten/{guildId}")]
+        [HttpGet("topten")]
         public async Task<ActionResult<IEnumerable<TimeSpent>>> GetTopTenUsers(ulong guildId)
         {
             return await _context.TimeSpent.Where(x => x.GuildId == guildId).OrderByDescending(u => u.MinutesActiv).Take(10).ToListAsync();

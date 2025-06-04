@@ -40,8 +40,6 @@ public class DiscordClient
         _client = new DiscordSocketClient(config);
         
         _client.Log += Log;
-        _client.Ready += ClientReady;
-        _client.SlashCommandExecuted += SlashCommandHandler;
         _client.UserVoiceStateUpdated += UserVoiceStateUpdatedEvent;
         
         var token = Environment.GetEnvironmentVariable("DISCORD_TOKEN");
@@ -57,94 +55,7 @@ public class DiscordClient
         Console.WriteLine(msg.ToString());
         return Task.CompletedTask;
     }
-
-    private async Task ClientReady()
-    {
-        
-        var timeSpentCommand = new Discord.SlashCommandBuilder()
-            .WithName("time-spent")
-            .WithDescription("Get time spent in voice channels for user.")
-            .AddOption("user", ApplicationCommandOptionType.User, "The user you want to check their time spent.", isRequired: false);
-        
-        var topTenCommand = new Discord.SlashCommandBuilder()
-            .WithName("top-ten")
-            .WithDescription("Get the top ten of users time spent in voice channels.");
-        
-        try
-        {
-            foreach (var guild in _client.Guilds)
-            {
-                await _client.Rest.CreateGuildCommand(timeSpentCommand.Build(), guild.Id);
-                await _client.Rest.CreateGuildCommand(topTenCommand.Build(), guild.Id);
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
     
-    private async Task SlashCommandHandler(SocketSlashCommand command)
-    {
-        switch(command.Data.Name)
-        {
-            case "time-spent":
-                await HandleTimeSpentCommand(command);
-                break;
-            case "top-ten":
-                await HandleTopTenCommand(command);
-                break;
-        }
-    }
-
-    private async Task HandleTimeSpentCommand(SocketSlashCommand command)
-    {
-        var commandOption = command.Data.Options.FirstOrDefault();
-        var guildUser = commandOption != null ? commandOption.Value as SocketGuildUser : command.User as SocketGuildUser;
-        var user = await GetUser(guildUser);
-        var result = await _httpClient.GetAsync($"api/TimeSpent/userId/{user.Id}/guildId/{guildUser.Guild.Id}");
-        var timeSpent = await result.Content.ReadFromJsonAsync<TimeSpent>();
-
-        var embedBuilder = new EmbedBuilder()
-            .WithAuthor(guildUser.ToString(), guildUser.GetAvatarUrl() ?? guildUser.GetDefaultAvatarUrl())
-            .WithTitle($"Time spent")
-            .WithDescription(timeSpent.ForDisplay(guildUser.Nickname));
-        
-        await command.RespondAsync(embed: embedBuilder.Build());
-    }
-    
-    private async Task HandleTopTenCommand(SocketSlashCommand command)
-    {
-        try
-        {
-            var guildId = command.GuildId ?? 0;
-            var result  = await _httpClient.GetAsync($"api/TimeSpent/topten/{guildId}");
-            var topTenTimeSpent = await result.Content.ReadFromJsonAsync<IEnumerable<TimeSpent>>();
-            var stringBuilder = new StringBuilder();
-
-            for (int i = 0; i < topTenTimeSpent.Count(); i++)
-            {
-                var timeSpent = topTenTimeSpent.ElementAt(i);
-                var userResult = await _httpClient.GetAsync($"api/User/{timeSpent.UserId}");
-                var user = await userResult.Content.ReadFromJsonAsync<User>();
-                var guildUser = _client.GetGuild(guildId).GetUser(user.DiscordId);
-                stringBuilder.AppendLine($"{i + 1}. {guildUser.Nickname} has spent {timeSpent.TimeActiv}.");
-            }
-
-            var embedBuilder = new EmbedBuilder()
-                .WithTitle($"Top 10 of users time spent")
-                .WithDescription(stringBuilder.ToString());
-        
-            await command.RespondAsync(embed: embedBuilder.Build());
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
-
     private async Task UserVoiceStateUpdatedEvent(SocketUser socketUser, SocketVoiceState oldState, SocketVoiceState newState)
     {
         var guildUser = socketUser as SocketGuildUser;

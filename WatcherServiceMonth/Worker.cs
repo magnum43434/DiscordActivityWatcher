@@ -5,7 +5,8 @@ using Library.Enums;
 using Library.Models;
 using Library.Utils;
 
-namespace WatcherService;
+namespace WatcherServiceMonth;
+
 
 public class Worker : BackgroundService
 {
@@ -24,20 +25,20 @@ public class Worker : BackgroundService
         _httpClient.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/json"));
     }
-
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.UtcNow);
 
-            await CheckTimeSpent();
+            await CheckMonthTimeSpent();
 
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            await Task.Delay(TimeSpan.FromHours(8),stoppingToken);
         }
     }
 
-    private async Task CheckTimeSpent()
+    private async Task CheckMonthTimeSpent()
     {
         foreach (var user in await GetUsers())
         {
@@ -46,17 +47,22 @@ public class Worker : BackgroundService
 
             foreach (var guildId in guildIds)
             {
-                await CreateTimeSpent(user.Id, guildId);
+                var resultLastMonthId = await _httpClient.GetAsync("api/MonthTimeSpent/lastMonthId");
+                var lastMonthId = await resultLastMonthId.Content.ReadFromJsonAsync<int>();
+                await CreateMonthTimeSpent(user.Id, guildId, lastMonthId);
+                var resultCurrentMonthId = await _httpClient.GetAsync("api/MonthTimeSpent/currentMonthId");
+                var currentMonthId = await resultCurrentMonthId.Content.ReadFromJsonAsync<int>();
+                await CreateMonthTimeSpent(user.Id, guildId, currentMonthId);
             }
         }
     }
-    
-    private async Task CreateTimeSpent(Guid userId, ulong guildId)
+
+    private async Task CreateMonthTimeSpent(Guid userId, ulong guildId, int monthId)
     {
         var timeCalculator = new TimeCalculator();
-        var result = await _httpClient.GetAsync($"api/Activities/guild?userId={userId}&guildId={guildId}");
-        var activities = await result.Content.ReadFromJsonAsync<IEnumerable<Activity>>();
-        var timeSpent = await GetTimeSpent(userId, guildId);
+        var resultActivities = await _httpClient.GetAsync($"api/Activities/guild?userId={userId}&guildId={guildId}");
+        var activities = await resultActivities.Content.ReadFromJsonAsync<IEnumerable<Activity>>();
+        var monthTimeSpent = await GetMonthTimeSpent(userId, guildId, monthId);
         Dictionary<Guid, List<Activity>> transactions = new Dictionary<Guid, List<Activity>>();
         foreach (var activity in activities)
         {
@@ -68,15 +74,15 @@ public class Worker : BackgroundService
             
             value.Add(activity);
         }
-
+        
         foreach (var keyValuePair in transactions)
         {
             var joinActivity = keyValuePair.Value
-                .FirstOrDefault(a => a.Action == ActivityAction.Joined);
+                .FirstOrDefault(a => a.Action == ActivityAction.Joined && MonthIdGenerator.CompareMonthIdWithDateTime(monthId, a.Created));
             var switchedActivity = keyValuePair.Value
-                .LastOrDefault(a => a.Action == ActivityAction.Switched);
+                .LastOrDefault(a => a.Action == ActivityAction.Switched && MonthIdGenerator.CompareMonthIdWithDateTime(monthId, a.Created));
             var leftActivity = keyValuePair.Value
-                .FirstOrDefault(a => a.Action == ActivityAction.Left);
+                .FirstOrDefault(a => a.Action == ActivityAction.Left && MonthIdGenerator.CompareMonthIdWithDateTime(monthId, a.Created));
             
             TimeSpan timeSpan;
             if (joinActivity != null && leftActivity == null && switchedActivity != null) timeSpan = switchedActivity.Created - joinActivity.Created;
@@ -85,24 +91,12 @@ public class Worker : BackgroundService
             
             timeCalculator.Add((int)timeSpan.TotalHours, timeSpan.Minutes);
         }
+        
+        monthTimeSpent.TimeActiv = timeCalculator.ToString();
+        monthTimeSpent.MinutesActiv = timeCalculator.TotalMinutes;
 
-        timeSpent.TimeActiv = timeCalculator.ToString();
-        timeSpent.MinutesActiv = timeCalculator.TotalMinutes;
-        timeSpent.LastActiv = activities.LastOrDefault().Created;
-
-        await UpdateTimeSpent(timeSpent);
-    }
-
-    private async Task<TimeSpent> GetTimeSpent(Guid userId, ulong guildId)
-    {
-        var result = await _httpClient.GetAsync($"api/TimeSpent/guild?userId={userId}&guildId={guildId}");
-        var timeSpent = await result.Content.ReadFromJsonAsync<TimeSpent>();
-        if (!result.IsSuccessStatusCode || timeSpent == null)
-        {
-            timeSpent = new TimeSpent() {UserId = userId, GuildId = guildId};
-        }
-
-        return timeSpent;
+        if (monthTimeSpent.MinutesActiv > 0) 
+            await UpdateMonthTimeSpent(monthTimeSpent);
     }
     
     private async Task<MonthTimeSpent> GetMonthTimeSpent(Guid userId, ulong guildId, int monthId)
@@ -117,20 +111,20 @@ public class Worker : BackgroundService
         return monthTimeSpent;
     }
 
-    private async Task UpdateTimeSpent(TimeSpent timeSpent)
+    private async Task UpdateMonthTimeSpent(MonthTimeSpent monthTimeSpent)
     {
         try
         {
-            var jsonObject = System.Text.Json.JsonSerializer.Serialize(timeSpent);
+            var jsonObject = System.Text.Json.JsonSerializer.Serialize(monthTimeSpent);
             var content = new StringContent(jsonObject.ToString(), Encoding.UTF8, "application/json");
-            if (timeSpent.Id != Guid.Empty)
+            if (monthTimeSpent.Id != Guid.Empty)
             {
-                var response = await _httpClient.PutAsync($"api/TimeSpent/{timeSpent.Id}", content);
+                var response = await _httpClient.PutAsync($"api/MonthTimeSpent/{monthTimeSpent.Id}", content);
                 response.EnsureSuccessStatusCode();
             }
             else
             {
-                var response = await _httpClient.PostAsync($"api/TimeSpent", content);
+                var response = await _httpClient.PostAsync($"api/MonthTimeSpent", content);
                 response.EnsureSuccessStatusCode();
             }
         }

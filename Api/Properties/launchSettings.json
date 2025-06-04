@@ -7,7 +7,8 @@
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5014",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CONNECTION_STRING_DEFAULT": "Server=192.168.1.132;Database=Main-Dev;User Id=sa;Password=77KE46&Mv7t!#qG%&EdkR;Encrypt=False;"
       }
     },
     "https": {

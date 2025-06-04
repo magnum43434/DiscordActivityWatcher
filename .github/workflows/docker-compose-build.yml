@@ -35,7 +35,9 @@ jobs:
       - name: Create .env file
         run: |
           echo "API_BASE_URL=${{ vars.API_BASE_URL }}" > .env
+          echo "CONNECTION_STRING_DEFAULT=${{ vars.CONNECTION_STRING_DEFAULT }}" > .env
           echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}" >> .env
-  
+          echo "DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN_COMMAND }}" >> .env
+
       - name: Deploy with Docker Compose
         run: docker-compose -f deploy-compose.yaml up -d --force-recreate
