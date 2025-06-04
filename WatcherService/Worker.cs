@@ -17,7 +17,12 @@ public class Worker : BackgroundService
         _logger = logger;
         // Create a new HttpClient instance using our wrapper.
         _httpClient = httpClientFactoryWrapper.CreateClient("default");
-        _httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("API_BASE_URL"));
+        var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
+        if (string.IsNullOrWhiteSpace(apiBaseUrl))
+        {
+            throw new InvalidOperationException("The environment variable 'API_BASE_URL' was not found or empty.");
+        }
+        _httpClient.BaseAddress = new Uri(apiBaseUrl);
         // Clear any existing Accept headers.
         _httpClient.DefaultRequestHeaders.Accept.Clear();
         // Add the Accept header for "application/json".
