@@ -60,7 +60,6 @@ public class DiscordClient
     {
         var guildUser = socketUser as SocketGuildUser;
         var user = await GetUser(guildUser);
-        Activity activity;
         
         if (newState.VoiceChannel == null)
         {
