@@ -20,7 +20,12 @@ public class DiscordClient
     {
         // Create a new HttpClient instance using our wrapper.
         _httpClient = httpClientFactoryWrapper.CreateClient("default");
-        _httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("API_BASE_URL"));
+        var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
+        if (string.IsNullOrWhiteSpace(apiBaseUrl))
+        {
+            throw new InvalidOperationException("The environment variable 'API_BASE_URL' was not found or empty.");
+        }
+        _httpClient.BaseAddress = new Uri(apiBaseUrl);
         // Clear any existing Accept headers.
         _httpClient.DefaultRequestHeaders.Accept.Clear();
         // Add the Accept header for "application/json".
@@ -102,8 +107,7 @@ public class DiscordClient
         var commandOption = command.Data.Options.FirstOrDefault();
         var guildUser = commandOption != null ? commandOption.Value as SocketGuildUser : command.User as SocketGuildUser;
         var user = await GetUser(guildUser);
-        // var result = await _httpClient.GetAsync($"api/TimeSpent/guild?userId={user.Id}&guildId={guildUser.Guild.Id}");
-        var result = await _httpClient.GetAsync($"api/TimeSpent/guild?userId={user.Id}&guildId=107229471991427072");
+        var result = await _httpClient.GetAsync($"api/TimeSpent/guild?userId={user.Id}&guildId={guildUser.Guild.Id}");
         var timeSpent = await result.Content.ReadFromJsonAsync<TimeSpent>();
 
         var embedBuilder = new EmbedBuilder()
